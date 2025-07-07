@@ -244,6 +244,14 @@ README.md にビルドステータスを表示：
    - コードを自動フォーマット: `swiftformat .`
    - 設定ファイル `.swiftformat` を調整
    - `.swift-version` で Swift バージョンを指定
+   - モディファイアの順序: `override static` (正) vs `static override` (誤)
+
+5. **よくあるSwiftFormatエラーと解決法**
+   - `redundantReturn`: 単一式関数では `return` を省略
+   - `modifierOrder`: `override static` の順序で記述
+   - `wrapSingleLineComments`: 長いコメントは複数行に分割
+   - `trailingSpace`: 行末の空白を削除
+   - `consecutiveBlankLines`: 連続した空行を削除
 
 ### 🔧 ローカルでのテスト方法
 
