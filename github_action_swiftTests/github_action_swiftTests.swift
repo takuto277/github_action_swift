@@ -37,6 +37,6 @@ struct github_action_swiftTests {
     }
 
     private func performAsyncOperation() async -> String {
-        return "completed"
+        "completed"
     }
 }

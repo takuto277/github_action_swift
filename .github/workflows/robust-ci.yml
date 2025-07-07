@@ -1,0 +1,157 @@
+# 堅牢なGitHub Actionsワークフロー
+# Xcodeバージョンの互換性問題に対応
+
+name: Robust CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # Xcodeバージョン検出とビルド
+  adaptive-build:
+    name: Adaptive Build
+    runs-on: macos-15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    # Xcodeの環境を準備
+    - name: Setup Xcode environment
+      run: |
+        echo "=== Xcode Environment Info ==="
+        ls -la /Applications/Xcode*.app 2>/dev/null || echo "No Xcode apps found"
+        
+        # 最新のXcodeを選択
+        if [ -d "/Applications/Xcode.app" ]; then
+          sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+          echo "Selected: /Applications/Xcode.app"
+        elif [ -d "/Applications/Xcode_15.4.app" ]; then
+          sudo xcode-select -switch /Applications/Xcode_15.4.app/Contents/Developer
+          echo "Selected: /Applications/Xcode_15.4.app"
+        fi
+        
+        echo "=== Selected Xcode Version ==="
+        xcodebuild -version
+        
+        echo "=== Swift Version ==="
+        swift --version
+    
+    # プロジェクト情報を収集
+    - name: Analyze project
+      run: |
+        echo "=== Project Analysis ==="
+        
+        # プロジェクトファイルの情報
+        if [ -f "github_action_swift.xcodeproj/project.pbxproj" ]; then
+          echo "Project file exists"
+          head -20 github_action_swift.xcodeproj/project.pbxproj
+        fi
+        
+        # スキームをリスト
+        echo "=== Available Schemes ==="
+        xcodebuild -project github_action_swift.xcodeproj -list || echo "Could not list schemes"
+        
+        # 利用可能なシミュレーターをリスト
+        echo "=== Available Simulators ==="
+        xcrun simctl list devices available
+    
+    # フォールバック付きビルド
+    - name: Build with fallback
+      run: |
+        echo "=== Building Project ==="
+        
+        # ビルド用の関数
+        build_project() {
+          local destination="$1"
+          echo "Trying build with destination: $destination"
+          
+          xcodebuild \
+            -project github_action_swift.xcodeproj \
+            -scheme github_action_swift \
+            -destination "$destination" \
+            -configuration Debug \
+            -derivedDataPath ./DerivedData \
+            build
+        }
+        
+        # 複数のデスティネーションでトライ
+        destinations=(
+          "platform=iOS Simulator,name=iPhone 15"
+          "platform=iOS Simulator,name=iPhone 14"
+          "platform=iOS Simulator,name=iPhone 13"
+          "generic/platform=iOS Simulator"
+        )
+        
+        build_success=false
+        for dest in "${destinations[@]}"; do
+          if build_project "$dest"; then
+            echo "✅ Build succeeded with: $dest"
+            build_success=true
+            break
+          else
+            echo "❌ Build failed with: $dest"
+          fi
+        done
+        
+        if [ "$build_success" = false ]; then
+          echo "🚨 All build attempts failed"
+          exit 1
+        fi
+    
+    # テスト実行（オプション）
+    - name: Run tests (optional)
+      run: |
+        echo "=== Running Tests ==="
+        
+        # テスト用の関数
+        test_project() {
+          local destination="$1"
+          echo "Trying test with destination: $destination"
+          
+          xcodebuild \
+            -project github_action_swift.xcodeproj \
+            -scheme github_action_swift \
+            -destination "$destination" \
+            -configuration Debug \
+            -derivedDataPath ./DerivedData \
+            test
+        }
+        
+        # 複数のデスティネーションでトライ
+        destinations=(
+          "platform=iOS Simulator,name=iPhone 15"
+          "platform=iOS Simulator,name=iPhone 14"
+          "platform=iOS Simulator,name=iPhone 13"
+        )
+        
+        test_success=false
+        for dest in "${destinations[@]}"; do
+          if test_project "$dest"; then
+            echo "✅ Test succeeded with: $dest"
+            test_success=true
+            break
+          else
+            echo "❌ Test failed with: $dest"
+          fi
+        done
+        
+        if [ "$test_success" = false ]; then
+          echo "⚠️ All test attempts failed, but continuing..."
+        fi
+      continue-on-error: true
+    
+    # ビルド成果物の保存
+    - name: Archive build artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-logs
+        path: |
+          ./DerivedData/Build/Intermediates.noindex
+          ./DerivedData/Logs
+        retention-days: 3

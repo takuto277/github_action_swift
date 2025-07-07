@@ -14,7 +14,7 @@
 # 有効にするルール
 --enable isEmpty
 --enable redundantSelf
---enable sortedImports
+--enable sortImports
 --enable trailingClosures
 --enable unusedArguments
 --enable wrap
