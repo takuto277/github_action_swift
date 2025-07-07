@@ -8,7 +8,8 @@
 .github/
 └── workflows/
     ├── ci.yml              # メインのCI/CDワークフロー
-    └── simple-build.yml    # シンプルなビルドのみのワークフロー
+    ├── simple-build.yml    # シンプルなビルドのみのワークフロー
+    └── robust-ci.yml       # 堅牢なCI（Xcode互換性対応）
 .swiftlint.yml              # SwiftLintの設定ファイル
 .swiftformat                # SwiftFormatの設定ファイル
 .swift-version              # Swiftバージョン指定ファイル
@@ -226,17 +227,23 @@ README.md にビルドステータスを表示：
 ### よくある問題と解決策
 
 1. **ビルドが失敗する**
-
    - Xcode/Swift のバージョンを確認
    - 依存関係の問題を確認
 
-2. **テストが失敗する**
+2. **Xcodeプロジェクトファイルの互換性エラー**
+   ```
+   error: Unable to read project 'project.xcodeproj'.
+   Reason: The project is in a future Xcode project file format
+   ```
+   - **解決法**: `macos-15` ランナーを使用（最新Xcode対応）
+   - **代替案**: `robust-ci.yml` ワークフローを使用（複数Xcodeバージョン対応）
+   - **ローカル対応**: 古いXcodeでプロジェクトを開いて保存し直す
 
+3. **テストが失敗する**
    - シミュレーターの設定を確認
    - テストケースの修正
 
-3. **SwiftLint エラー**
-
+4. **SwiftLint エラー**
    - `.swiftlint.yml` の設定を調整
    - コードスタイルを修正
 
@@ -260,14 +267,30 @@ README.md にビルドステータスを表示：
 swiftlint
 
 # SwiftFormatでフォーマットをチェック
-swiftformat --lint .
+swiftformat --lint . --swiftversion 5.9
 
 # SwiftFormatで自動修正
-swiftformat .
+swiftformat . --swiftversion 5.9
 
-# Xcodeでビルドとテスト
+# Xcodeでビルドとテスト（複数のデスティネーションを試す）
+# iPhone 15で試す
 xcodebuild -project github_action_swift.xcodeproj -scheme github_action_swift -destination 'platform=iOS Simulator,name=iPhone 15' build test
+
+# iPhone 14で試す（フォールバック）
+xcodebuild -project github_action_swift.xcodeproj -scheme github_action_swift -destination 'platform=iOS Simulator,name=iPhone 14' build test
+
+# 利用可能なシミュレーターをリスト表示
+xcrun simctl list devices available
 ```
+
+### 🚨 Xcodeバージョン問題の対処法
+
+**問題**: GitHub ActionsでXcodeプロジェクトファイルが読み込めない
+
+**解決方法**:
+1. **ワークフロー選択**: `robust-ci.yml` を使用（自動フォールバック機能付き）
+2. **ランナー更新**: `macos-15` で最新Xcode使用
+3. **プロジェクト変換**: ローカルで古いXcodeでプロジェクトを開いて保存
 
 ## 📚 参考リンク
 

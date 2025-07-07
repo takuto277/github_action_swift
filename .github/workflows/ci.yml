@@ -23,53 +23,73 @@ jobs:
   # ビルドとテストのジョブ
   build-and-test:
     name: Build and Test
-    runs-on: macos-latest # macOS環境を使用（Xcode/Swiftが必要なため）
+    runs-on: macos-15 # 最新のmacOSを使用（Xcode 16対応）
     
     steps:
     # 1. リポジトリのコードをチェックアウト
     - name: Checkout code
       uses: actions/checkout@v4
     
-    # 2. Xcodeのバージョンを表示（デバッグ用）
+    # 2. 最新のXcodeを選択
+    - name: Select Xcode version
+      run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+    
+    # 3. Xcodeのバージョンを表示（デバッグ用）
     - name: Show Xcode version
       run: xcodebuild -version
     
-    # 3. Swift のバージョンを表示
+    # 4. Swift のバージョンを表示
     - name: Show Swift version
       run: swift --version
     
-    # 4. プロジェクトをビルド
+    # 5. 利用可能なシミュレーターをリスト表示
+    - name: List available simulators
+      run: xcrun simctl list devicetypes
+    
+    # 6. プロジェクトスキームをリスト表示
+    - name: List schemes
+      run: xcodebuild -project github_action_swift.xcodeproj -list
+    
+    # 7. プロジェクトをビルド（エラーハンドリング改善）
     - name: Build project
       run: |
+        set -o pipefail
         xcodebuild \
           -project github_action_swift.xcodeproj \
           -scheme github_action_swift \
-          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
-          build
+          -destination 'platform=iOS Simulator,name=iPhone 15' \
+          -configuration Debug \
+          -derivedDataPath ./DerivedData \
+          build \
+          | xcpretty && exit ${PIPESTATUS[0]}
     
-    # 5. テストを実行
+    # 8. テストを実行
     - name: Run tests
       run: |
+        set -o pipefail
         xcodebuild \
           -project github_action_swift.xcodeproj \
           -scheme github_action_swift \
-          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
-          test
+          -destination 'platform=iOS Simulator,name=iPhone 15' \
+          -configuration Debug \
+          -derivedDataPath ./DerivedData \
+          test \
+          | xcpretty && exit ${PIPESTATUS[0]}
     
-    # 6. テスト結果をアップロード（失敗時のデバッグ用）
+    # 9. テスト結果をアップロード（失敗時のデバッグ用）
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: test-results
         path: |
-          ~/Library/Developer/Xcode/DerivedData/**/Logs/Test/*.xcresult
+          ./DerivedData/Logs/Test/*.xcresult
         retention-days: 5
 
   # コード品質チェックのジョブ
   code-quality:
     name: Code Quality
-    runs-on: macos-latest
+    runs-on: macos-15
     
     steps:
     - name: Checkout code
@@ -81,7 +101,6 @@ jobs:
     
     - name: Run SwiftLint
       run: swiftlint lint --strict
-      continue-on-error: true # 警告があっても続行
     
     # SwiftFormat を使用してフォーマットをチェック
     - name: Install SwiftFormat
