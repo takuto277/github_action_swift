@@ -20,7 +20,10 @@ opt_in_rules:
 
 # 無効にするルール
 disabled_rules:
-  - trailing_whitespace # 行末の空白を許可
+  - trailing_whitespace # SwiftFormatが管理するため無効化
+  - vertical_whitespace # SwiftFormatが管理するため無効化
+  - opening_brace # SwiftFormatが管理するため無効化
+  - closing_brace # SwiftFormatが管理するため無効化
 
 # ルールの設定
 line_length:

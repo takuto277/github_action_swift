@@ -1,0 +1,46 @@
+# SwiftFormat 設定ファイル
+# コードフォーマットのルールを定義
+
+# Swift バージョンを指定
+--swiftversion 5.9
+
+# インデント設定
+--indent 4
+--tabwidth 4
+
+# 行長の設定
+--maxwidth 120
+
+# 有効にするルール
+--enable isEmpty
+--enable redundantSelf
+--enable sortedImports
+--enable trailingClosures
+--enable unusedArguments
+--enable wrap
+
+# 無効にするルール
+--disable redundantParens
+--disable wrapArguments
+
+# その他の設定
+--trimwhitespace always
+--insertlines enabled
+--removelines enabled
+--allman false
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+--commas always
+--decimalgrouping 3,6
+--binarygrouping 4,8
+--octalgrouping 4,8
+--hexgrouping 4,8
+--hexliteralcase lowercase
+--exponentcase lowercase
+--redundanttype explicit
+--self remove
+--selfrequired 
+--importgrouping testable-bottom
+--ranges spaced

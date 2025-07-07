@@ -10,6 +10,8 @@
     ├── ci.yml              # メインのCI/CDワークフロー
     └── simple-build.yml    # シンプルなビルドのみのワークフロー
 .swiftlint.yml              # SwiftLintの設定ファイル
+.swiftformat                # SwiftFormatの設定ファイル
+.swift-version              # Swiftバージョン指定ファイル
 ```
 
 ## 🚀 GitHub Actions とは
@@ -126,7 +128,7 @@ README.mdにビルドステータスを表示：
 ![CI Status](https://github.com/username/repository/workflows/CI/badge.svg)
 ```
 
-## 🐛 トラブルシューティング
+### 🐛 トラブルシューティング
 
 ### よくある問題と解決策
 
@@ -141,6 +143,27 @@ README.mdにビルドステータスを表示：
 3. **SwiftLintエラー**
    - `.swiftlint.yml` の設定を調整
    - コードスタイルを修正
+
+4. **SwiftFormatエラー**
+   - コードを自動フォーマット: `swiftformat .`
+   - 設定ファイル `.swiftformat` を調整
+   - `.swift-version` でSwiftバージョンを指定
+
+### 🔧 ローカルでのテスト方法
+
+```bash
+# SwiftLintでコード品質をチェック
+swiftlint
+
+# SwiftFormatでフォーマットをチェック
+swiftformat --lint .
+
+# SwiftFormatで自動修正
+swiftformat .
+
+# Xcodeでビルドとテスト
+xcodebuild -project github_action_swift.xcodeproj -scheme github_action_swift -destination 'platform=iOS Simulator,name=iPhone 15' build test
+```
 
 ## 📚 参考リンク
 
