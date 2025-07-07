@@ -1,0 +1,43 @@
+# SwiftLint 設定ファイル
+# コードの品質とスタイルをチェックするための設定
+
+# 除外するディレクトリ
+excluded:
+  - Pods
+  - .build
+  - DerivedData
+  - github_action_swift.xcodeproj
+
+# 有効にするルール
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - force_unwrapping
+  - closure_spacing
+  - operator_usage_whitespace
+  - redundant_nil_coalescing
+  - sorted_imports
+
+# 無効にするルール
+disabled_rules:
+  - trailing_whitespace # 行末の空白を許可
+
+# ルールの設定
+line_length:
+  warning: 120
+  error: 200
+
+function_body_length:
+  warning: 60
+  error: 100
+
+type_body_length:
+  warning: 300
+  error: 500
+
+identifier_name:
+  min_length:
+    warning: 1
+  max_length:
+    warning: 60
+    error: 100

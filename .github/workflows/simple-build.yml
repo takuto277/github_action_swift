@@ -1,0 +1,27 @@
+# 簡単なGitHub Actionsの例
+# 基本的なビルドのみを行うシンプルなワークフロー
+
+name: Simple Build
+
+# mainブランチにプッシュされた時のみ実行
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  simple-build:
+    name: Simple Build Job
+    runs-on: macos-latest
+    
+    steps:
+    # コードをチェックアウト
+    - uses: actions/checkout@v4
+    
+    # プロジェクトをビルド
+    - name: Build
+      run: |
+        xcodebuild \
+          -project github_action_swift.xcodeproj \
+          -scheme github_action_swift \
+          -destination 'platform=iOS Simulator,name=iPhone 15' \
+          build

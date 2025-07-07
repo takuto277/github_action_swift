@@ -1,0 +1,92 @@
+# GitHub Actions CI ワークフロー
+# このファイルは、プッシュやプルリクエスト時に自動的にビルドとテストを実行します
+
+name: CI
+
+# ワークフローを実行するトリガーを定義
+on:
+  # main ブランチへのプッシュ時
+  push:
+    branches: [ main, master ]
+  # プルリクエスト作成時
+  pull_request:
+    branches: [ main, master ]
+  # 手動実行を可能にする
+  workflow_dispatch:
+
+# 並行実行の制御（同一ブランチで複数実行されないようにする）
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ビルドとテストのジョブ
+  build-and-test:
+    name: Build and Test
+    runs-on: macos-latest # macOS環境を使用（Xcode/Swiftが必要なため）
+    
+    steps:
+    # 1. リポジトリのコードをチェックアウト
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    # 2. Xcodeのバージョンを表示（デバッグ用）
+    - name: Show Xcode version
+      run: xcodebuild -version
+    
+    # 3. Swift のバージョンを表示
+    - name: Show Swift version
+      run: swift --version
+    
+    # 4. プロジェクトをビルド
+    - name: Build project
+      run: |
+        xcodebuild \
+          -project github_action_swift.xcodeproj \
+          -scheme github_action_swift \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          build
+    
+    # 5. テストを実行
+    - name: Run tests
+      run: |
+        xcodebuild \
+          -project github_action_swift.xcodeproj \
+          -scheme github_action_swift \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          test
+    
+    # 6. テスト結果をアップロード（失敗時のデバッグ用）
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-results
+        path: |
+          ~/Library/Developer/Xcode/DerivedData/**/Logs/Test/*.xcresult
+        retention-days: 5
+
+  # コード品質チェックのジョブ
+  code-quality:
+    name: Code Quality
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    # SwiftLint を使用してコード品質をチェック
+    - name: Install SwiftLint
+      run: brew install swiftlint
+    
+    - name: Run SwiftLint
+      run: swiftlint lint --strict
+      continue-on-error: true # 警告があっても続行
+    
+    # SwiftFormat を使用してフォーマットをチェック
+    - name: Install SwiftFormat
+      run: brew install swiftformat
+    
+    - name: Check code formatting
+      run: swiftformat --lint .
+      continue-on-error: true # フォーマット違反があっても続行
