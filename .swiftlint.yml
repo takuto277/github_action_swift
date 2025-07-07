@@ -24,6 +24,7 @@ disabled_rules:
   - vertical_whitespace # SwiftFormatが管理するため無効化
   - opening_brace # SwiftFormatが管理するため無効化
   - closing_brace # SwiftFormatが管理するため無効化
+  - type_name # Xcodeが生成するファイル名を許可
 
 # ルールの設定
 line_length:
